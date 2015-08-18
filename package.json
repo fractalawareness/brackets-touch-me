@@ -1,0 +1,12 @@
+{
+    "title": "Touch Me",
+    "name": "brackets-touch-me",
+    "version": "1.0.0",
+    "author": "Oleksandr Korzhykov <fractalawareness@gmail.com>",
+    "homepage": "https://github.com/fractalawareness/brackets-touch-me",
+    "description": "Use Brackets on the touchscreen devices.",
+    "homepage": "https://github.com/fractalawareness/brackets-touch-me",
+    "keywords": ["touch", "screen", "touchscreen"],
+    "categories": ["general", "editing"],
+    "license": "MIT"
+}
