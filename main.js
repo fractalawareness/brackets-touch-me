@@ -8,7 +8,7 @@ define(function (require, exports, module) {
     
     var extensionEnabled=true;
     
-    var rightClickDelay=500, touchstartEvent;
+    var rightClickDelay=500, doubleClickDelay=500, touchstartEvent, previousTouchEndEvent;
     
     //add a button to turn the extension on and off
     function addExtensionButton(){
@@ -85,6 +85,12 @@ define(function (require, exports, module) {
         return touchTarget;
     }
     
+    function doubleClickEvent() {
+        var event = document.createEvent( "MouseEvents" );
+        event.initMouseEvent( 'dblclick', true, true, window, 0, 0, 0, 1, 1, false, false,false,false, 0, document.body.parentNode );
+        return event;
+    }
+    
     //main event handler
     function clickEvent(e){
         if(!extensionEnabled) return;
@@ -92,6 +98,7 @@ define(function (require, exports, module) {
         if(!brokenTarget) return;
         e.preventDefault();
         var isRightClick=(e.timeStamp-touchstartEvent.timeStamp>rightClickDelay);
+        var isDoubleClick=(previousTouchEndEvent && e.timeStamp-previousTouchEndEvent.timeStamp<doubleClickDelay);
         if(isRightClick) return;
         
         var pageX=e.changedTouches[0].pageX;
@@ -117,13 +124,16 @@ define(function (require, exports, module) {
             }
             node = node.parentElement;
         }
-
-        if(click){
+        
+        if(isDoubleClick) {
+            $(brokenTarget)[0].dispatchEvent(doubleClickEvent());
+        } else if(click){
             $(brokenTarget).click();
         } else {
             $(brokenTarget).mousedown();
             $(brokenTarget).mouseup();
         }
+        previousTouchEndEvent=e;
     }
     
     //addExtensionButton();
