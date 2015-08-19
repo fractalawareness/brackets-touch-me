@@ -31,11 +31,22 @@ define(function (require, exports, module) {
         var isBroken;
         for (var a in path)if(path.hasOwnProperty(a)){
             var step=path[a];
-            //TO-DO: the array should be editable so everyone can enter new div ids + add a class possibility
-            var badParentsList=['sidebar', 'status-bar', 'main-toolbar', 'problems-panel'];
-            var hasBadParent=(badParentsList.indexOf(step.id)>-1);
-            var isBadLink=(step.classList && step.classList.contains('modal-body') && touchTarget.tagName=='A');
-            if(hasBadParent || isBadLink){ 
+            
+            //TO-DO: next arrays should be editable so everyone can enter new values
+            var badParentsIdList=['sidebar', 'status-bar', 'main-toolbar', 'problems-panel'];
+            var badParentsClassList=['dropdown-menu'];
+            var hasBadIdParent=(badParentsIdList.indexOf(step.id)>-1);
+            var hasBadClassParent, isBadLink;
+            
+            if(step.classList){
+                for (var a in badParentsClassList)if(badParentsClassList.hasOwnProperty(a)){
+                    var badClass=badParentsClassList[a];
+                    if(step.classList.contains(badClass)) hasBadClassParent=true;
+                }
+                if(step.classList.contains('modal-body') && touchTarget.tagName=='A') isBadLink=true;
+            }
+            
+            if(hasBadIdParent || hasBadClassParent || isBadLink){ 
                 isBroken=true;
             }
         }

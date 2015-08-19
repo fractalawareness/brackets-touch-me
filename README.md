@@ -6,4 +6,4 @@ You may download and install this extension in many ways following the instructi
 [Brackets Wiki page](https://github.com/adobe/brackets/wiki/Brackets-Extensions)
 
 ### Did it help you?
-If *yes* and you feel like throwing money at the screen: [![Donate! :3](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C7QYVKM5NJEVC)
+If **yes** and you feel like throwing money at the screen: [![Donate! :3](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C7QYVKM5NJEVC)
