@@ -4,8 +4,6 @@
 define(function (require, exports, module) {
     "use strict";
     
-    var NativeApp=brackets.getModule('utils/NativeApp');
-    
     var extensionEnabled=true;
     
     var rightClickDelay=500, doubleClickDelay=500, touchstartEvent, previousTouchEndEvent;
@@ -25,110 +23,95 @@ define(function (require, exports, module) {
     
     //check if we need to apply it on the current target
     function isBrokenCheck(e){
-        var path=e.path;
-        var touchTarget=e.target;
+        //TO-DO: next arrays should be editable so everyone can enter new exceptions
+        var exceptionParentsIdList=['editor-holder'];
+        var exceptionParentsClassList=[];
+        var isException;
         
-        var isBroken;
+        var path=e.path;
         for (var a in path)if(path.hasOwnProperty(a)){
             var step=path[a];
-            
-            //TO-DO: next arrays should be editable so everyone can enter new values
-            var badParentsIdList=['sidebar', 'status-bar', 'main-toolbar', 'problems-panel'];
-            var badParentsClassList=['dropdown-menu'];
-            var hasBadIdParent=(badParentsIdList.indexOf(step.id)>-1);
-            var hasBadClassParent, isBadLink;
-            
-            if(step.classList){
-                for (var a in badParentsClassList)if(badParentsClassList.hasOwnProperty(a)){
-                    var badClass=badParentsClassList[a];
-                    if(step.classList.contains(badClass)) hasBadClassParent=true;
+            var hasExceptionIdParent=(exceptionParentsIdList.indexOf(step.id)!=-1);
+            var hasExceptionClassParent;
+            if(step.classList && step.classList.length){
+                for (var a in exceptionParentsClassList)if(exceptionParentsClassList.hasOwnProperty(a)){
+                    var exceptionClass=exceptionParentsClassList[a];
+                    if(step.classList.contains(exceptionClass)) hasExceptionClassParent=true;
                 }
-                if(step.classList.contains('modal-body') && touchTarget.tagName=='A') isBadLink=true;
             }
-            
-            if(hasBadIdParent || hasBadClassParent || isBadLink){ 
-                isBroken=true;
-            }
+            if(hasExceptionIdParent || hasExceptionClassParent) isException=true;
         }
-        return (isBroken)?touchTarget:false;
+        
+        if(!isException) return e.target;
     }
     
     //check if a close button was pressed on the working-set-view item
-    function closeButtonPressedCheck(e, x, y){
+    function closeButton(e, pageX, pageY){
         var touchTarget;
-        var children=[];
         
+        var elementToMouseOver=e.target.parentElement;
         if(e.target.classList.contains('extension')) {
-            $(e.target.parentElement.parentElement).trigger('mouseover')
-            children=e.target.parentElement.parentElement.children;
+            elementToMouseOver=e.target.parentElement.parentElement;
         } else if(e.target.tagName=="LI"){
-            $(e.target).trigger('mouseover');    
-            children=e.target.children;
-        } else {
-            $(e.target.parentElement).trigger('mouseover');    
-            children=e.target.parentElement.children;
+            elementToMouseOver=e.target;
         }
+        $(elementToMouseOver).trigger('mouseover');
         
+        var children=elementToMouseOver.children;
         $(children).each(function(i, doc){
             if(doc.classList.contains('can-close')){
                 var closeButtonDiv=$(doc);
-                var x1 = closeButtonDiv.offset().left;
-                var y1 = closeButtonDiv.offset().top;
-                var h1 = closeButtonDiv.outerHeight(true);
-                var w1 = closeButtonDiv.outerWidth(true);
-                var b1 = y1 + h1;
-                var r1 = x1 + w1;
-
-                if(x>x1 && x<r1 && y>y1 && y<b1) touchTarget=doc;
+                var buttonX = closeButtonDiv.offset().left;
+                var buttonY = closeButtonDiv.offset().top;
+                var buttonH = closeButtonDiv.outerHeight(true);
+                var buttonW = closeButtonDiv.outerWidth(true);
+                var buttonB = buttonY + buttonH;
+                var buttonR = buttonX + buttonW;
+                if(pageX>buttonX && pageX<buttonR && pageY>buttonY && pageY<buttonB) touchTarget=doc;
             }
         })
+        
         return touchTarget;
     }
     
-    function doubleClickEvent() {
+    function createEvent(type) {
         var event = document.createEvent( "MouseEvents" );
-        event.initMouseEvent( 'dblclick', true, true, window, 0, 0, 0, 1, 1, false, false,false,false, 0, document.body.parentNode );
+        event.initMouseEvent( type || 'click', true, true, 
+                             window, 0, 0, 
+                             0, 1, 1, 
+                             false, false, false,
+                             false, 0, document.body.parentNode );
         return event;
     }
     
     //main event handler
     function clickEvent(e){
         if(!extensionEnabled) return;
+        var isRightClick=(e.timeStamp-touchstartEvent.timeStamp>rightClickDelay);
+        if(isRightClick) return;
         var brokenTarget=isBrokenCheck(e);
         if(!brokenTarget) return;
-        e.preventDefault();
-        var isRightClick=(e.timeStamp-touchstartEvent.timeStamp>rightClickDelay);
+        
+        var click=true;
         var isDoubleClick=(previousTouchEndEvent && e.timeStamp-previousTouchEndEvent.timeStamp<doubleClickDelay);
-        if(isRightClick) return;
         
         var pageX=e.changedTouches[0].pageX;
         var pageY=e.changedTouches[0].pageY;
         var node = e.changedTouches[0].target, url;
-        var click=true;
-
         while (node) {
-            //"open-in-browser-link" check
-            if (node.tagName === "A") {
-                url = node.getAttribute("href");
-                if (url && !url.match(/^#/)) {
-                    NativeApp.openURLInDefaultBrowser(url);
-                    break;
-                }
-            }
-            //working-set-view check to provide close buttons working
+            //working-set-view fix and provide close buttons working
             if(node.parentElement && node.parentElement.classList.contains('working-set-view')){
                 click=false;
-                var closePressed=closeButtonPressedCheck(e, pageX, pageY);
-                if(closePressed) brokenTarget=closePressed;
+                brokenTarget=closeButton(e, pageX, pageY) || brokenTarget;
                 break;
             }
             node = node.parentElement;
         }
         
-        if(isDoubleClick) {
-            $(brokenTarget)[0].dispatchEvent(doubleClickEvent());
-        } else if(click){
-            $(brokenTarget).click();
+        e.preventDefault();
+        if(click || isDoubleClick) {
+            var eventName=(click)?'click':'dblclick';
+            $(brokenTarget)[0].dispatchEvent(createEvent(eventName));
         } else {
             $(brokenTarget).mousedown();
             $(brokenTarget).mouseup();
